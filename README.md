@@ -1,2 +1,3 @@
 # Java_Study
-Java
+
+자바 기초 훑기

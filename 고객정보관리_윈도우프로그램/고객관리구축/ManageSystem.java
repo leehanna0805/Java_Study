@@ -2,6 +2,7 @@ package 고객관리구축;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileWriter;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Vector;
@@ -18,7 +19,8 @@ import javax.swing.table.TableRowSorter;
  * 수정일			  수정자	   작업 내용(수정 내용)	
  * ----------	------   ----------------
  * 2021.10.07    이한나         레이아웃 설계, 기능 구현
- * 2021.10.08	 이한나
+ * 2021.10.08	  이한나	  데이터 추가 기능 구현
+ * 2021.10.12	  이한나	  데이터 수정,삭제 기능 구현
  */
 
 
@@ -130,8 +132,40 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 
 		@Override
 		public void actionPerformed(ActionEvent e) { //ActionListener 꺼
-			
+			if(e.getActionCommand().equals("열기")) open();
+			else if(e.getActionCommand().equals("저장")) save();
+			else if(e.getActionCommand().equals("닫기")) exit();
 		} 
+		
+		public void open() {
+			
+		}
+		public void save() { //가장 핵심 기능
+			// FileDialog: 다른이름으로저장 같은 창 띄워주는 역할. 
+			saveOpen = new FileDialog(ManageSystem.this, "문서저장", FileDialog.SAVE);
+			saveOpen.setVisible(true); // 창 띄우기
+			
+			// 사용자가 선택한 디렉토리, 파일 이름을 얻어와야 해 
+			fileDir = saveOpen.getDirectory();// 디렉토리 얻어오기
+			fileName = saveOpen.getFile();    // 파일명 얻어오기
+			
+			//저장하기 위해 디렉토리 + 파일명 합침
+			savefileName = fileDir + "//" + fileName;	// 특수문자니까 / 한번더 써준거임.
+			
+			String str = "";
+			String temp = "";
+			
+			//파일처리시 반.드.시 예외처리 할 것
+			try {
+				BufferedWriter save = new BufferedWriter(new FileWriter(savefileName)); 
+			}catch(Exception e) {}
+			
+		}
+		public void exit() {
+			
+		}
+		
+		
 	} //end MenuMain
 // ===============================================================================================
 	// 입력, 정보 검색 만들기 (West 내부 클래스)
@@ -253,8 +287,29 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if(e.getActionCommand().equals("이름"))	searchType = 1;
+				if(e.getActionCommand().equals("직업"))	searchType = 9;
+				if(e.getActionCommand().equals("출생지역"))	searchType = 7;
+				if(e.getActionCommand().equals("생일"))	searchType = 8;
+				if(e.getActionCommand().equals("찾기"))	search();
 				if(e.getActionCommand().equals("나가기")) goOut();
+				 
 			}
+			
+			public void search() {
+				Vector v = new Vector();
+				
+				for(int i=0;i<showTable.data.size();i++) {
+					if(nameText.getText().equals(showTable.data.elementAt(i).get(searchType))) {
+						v.addElement(showTable.data.elementAt(i));
+					}
+				}
+				
+				showTable.datamodel.setDataVector(v, showTable.column_name);
+				showTable.TableSize();
+				nameText.setText(null);
+			}
+			
 			public void goOut() {
 				west.output.card.show(west.output,"신상정보 카드");
 			}
@@ -308,8 +363,74 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			//추가 버튼이 클릭되면. getActionCommand는 문자열을 가져옴.
 			if(e.getActionCommand().equals("추가")) addData(); //이 메소드 호출해라
 			else if(e.getActionCommand().equals("검색")) searchData();
+			else if(e.getActionCommand().equals("수정")) updateData();
+			else if(e.getActionCommand().equals("삭제")) deleteData();
 			
 		} 
+		
+		public void deleteData() {
+			int yes_no_select = JOptionPane.showConfirmDialog(null, "정말 삭제하시겠습니까?","삭제 확인 창", JOptionPane.YES_NO_OPTION);	//예,아니요 버튼 만듦
+		
+			if(yes_no_select == JOptionPane.YES_OPTION) {
+				addBtn.setEnabled(true); //추가 버튼 활성화
+				JTable tb = showTable.table;
+				int deleteRow = tb.getSelectedRow();
+				if(deleteRow == -1) {	//행을 안누르고 삭제버튼을 누른 경우
+					return;
+				}else {	//행을 선택함
+					DefaultTableModel model = (DefaultTableModel)tb.getModel();
+					model.removeRow(deleteRow);
+					
+					west.input.tf[0].setText(null);
+					west.input.tf[1].setText(null);
+					west.input.tf[2].setText(null);
+					west.input.tf[3].setText(null);
+					west.input.tf[4].setText(null);
+					west.input.box.setSelectedIndex(0); // '선택'으로 초기화
+					
+					west.output.label[0].setText("	나  이: ");
+					west.output.label[1].setText("	성  별: ");
+					west.output.label[2].setText("	츌생지: ");
+					west.output.label[3].setText("	생  일: ");
+					
+					west.input.tf[0].requestFocus(); // 번호에 포커스
+				}
+				
+				
+			}
+		}
+		
+		// '수정' 버튼 클릭시 (핸드폰 번호, 이메일, 직업 수정)
+		public void updateData() {
+			int updateRow = showTable.table.getSelectedRow(); // 몇 번째 행을 선택했는지 가져옴
+			
+			//핸드폰 번호 수정
+			showTable.table.setValueAt(west.input.tf[2].getText(), updateRow, 2);
+		
+			//이메일 수정
+			showTable.table.setValueAt(west.input.tf[3].getText(), updateRow, 3);
+			
+			//직업 수정
+			showTable.table.setValueAt(west.input.box.getSelectedItem(), updateRow, 9);
+			
+			//
+			west.input.tf[0].setText(null);
+			west.input.tf[1].setText(null);
+			west.input.tf[2].setText(null);
+			west.input.tf[3].setText(null);
+			west.input.tf[4].setText(null);
+			west.input.box.setSelectedIndex(0); // '선택'으로 초기화
+			
+			// 데이터 수정 후 다음데이터 입력위해 주민번호 다시 활성화 ?
+			west.input.tf[4].setEditable(true);
+			west.input.tf[0].requestFocus(); // 번호에 포커스
+			
+			west.output.label[0].setText("	나  이: ");
+			west.output.label[1].setText("	성  별: ");
+			west.output.label[2].setText("	츌생지: ");
+			west.output.label[3].setText("	생  일: ");
+			return;
+		}
 		
 		// '추가' 버튼 클릭시 이벤트 처리 메소드
 		public void addData() {
@@ -477,9 +598,41 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			TableRowSorter<TableModel> tableSorter = new TableRowSorter<TableModel>(table.getModel());
 			table.setRowSorter(tableSorter);	
 		
-			TableSize();
-				
+			TableSize();		
+		}	//생성자 끝
+		
+		// 필요한 메소드 수동 오버라이드
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			row = table.getSelectedRow();
+			
+			// Jtable에 있는 데이터를 west.input.JTextField 에 보여주기
+			Info();
+			
 		}
+		
+		public void Info() {
+			int row = this.row; //showTable.row
+			west.input.tf[0].setText((String)showTable.table.getValueAt(row, 0));
+			west.input.tf[1].setText((String)showTable.table.getValueAt(row, 1));
+			west.input.tf[2].setText((String)showTable.table.getValueAt(row, 2));
+			west.input.tf[3].setText((String)showTable.table.getValueAt(row, 3));
+			west.input.tf[4].setText((String)showTable.table.getValueAt(row, 4));
+		
+			// 주민번호는 수정 못하게 비활성화
+			west.input.tf[4].setEditable(false);
+			west.input.box.setSelectedItem(showTable.table.getValueAt(row, 9));
+			
+			west.output.label[0].setText("	     나 이: "+showTable.table.getValueAt(row, 5));
+			west.output.label[1].setText("	     성 별: "+showTable.table.getValueAt(row, 6));
+			west.output.label[2].setText("	츌생지역: "+showTable.table.getValueAt(row, 7));
+			west.output.label[3].setText("	     생 일: "+showTable.table.getValueAt(row, 8));
+			
+			showTable.table.changeSelection(row, 0, false, false);
+			
+		}
+		
+		
 		public void TableSize() {	// 셀 크기 조절 (이메일 칸 넓게 등)
 			// JTable의 셀 크기 조절하기
 			table.getColumnModel().getColumn(0).setPreferredWidth(50);  // 번호 셀

@@ -76,7 +76,7 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 	
 // ===============================================================================================
 	// 메뉴 만들기(파일, 정렬, 도움말) -> 내부 클래스(inner class).
-	class MenuMain extends JPanel implements ActionListener, ItemListener{ //JPanel은 작은 컨테이너. Listener들은 인터페이스
+	class MenuMain extends JPanel implements ActionListener, ItemListener{ //JPanel은 작은 컨테이너. Listener들은 인터페이스. (인터페이스는 여러개 상속가능)
 		
 		JMenuBar			bar;
 		JMenu 				file, sort, help;  // 파일, 정렬, 도움말
@@ -131,7 +131,82 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 		
 		@Override
 		public void itemStateChanged(ItemEvent e) {	//ItemListener 꺼
+			if(e.getSource().equals(sno)) numSort(); //번호 정렬
+			else if(e.getSource().equals(sname)) stringSort(1); //이름정렬
+			else if(e.getSource().equals(schul)) stringSort(2); //지역정렬
+			else if(e.getSource().equals(sjob)) stringSort(3);  //직업 정렬
+		}
+		
+		public void numSort() {
+			int row = showTable.table.getRowCount();	//행의 갯수 얻기
+			int col = showTable.table.getColumnCount(); //열의 갯수 얻기
 			
+			String temp;
+			String[][] arr = new String[row][col];
+			
+			//먼저 JTable 객체의 데이터들을 arr 2차원 배열로 옮기기
+			for(int i=0;i<row;i++) {
+				for(int j=0;j<col;j++) {
+					arr[i][j] = (String)showTable.table.getValueAt(i, j);
+				}
+			}
+			
+			//선택정렬 알고리즘 Selection Sort
+			for(int i=0;i<row-1;i++) {
+				for(int j=i+1;j<row-1;j++) {
+					if(Integer.parseInt(arr[i][0]) > Integer.parseInt(arr[j][0])) { //반드시 정수화해서 정렬해라! 아니면 잘 안될수도있어.
+						//앞에가 더 크면 교환해라.
+						for(int k=0;k<col;k++) {
+							temp = arr[i][k];
+							arr[i][k] = arr[j][k];
+							arr[j][k] = temp;
+						}
+					}
+				}
+			}
+			
+			// 2차원 배열의 데이터를 JTable객체로 옮기기
+			for(int i=0;i<row;i++) {
+				for(int j=0;j<col;j++) {
+					showTable.table.setValueAt(arr[i][j], i, j);
+				}
+			}
+			
+		}
+		public void stringSort(int sortType) {
+			int row = showTable.table.getRowCount();	//행의 갯수 얻기
+			int col = showTable.table.getColumnCount(); //열의 갯수 얻기
+			
+			String temp;
+			String[][] arr = new String[row][col];
+			
+			//먼저 JTable 객체의 데이터들을 arr 2차원 배열로 옮기기
+			for(int i=0;i<row;i++) {
+				for(int j=0;j<col;j++) {
+					arr[i][j] = (String)showTable.table.getValueAt(i, j);
+				}
+			}
+			
+			//선택정렬 알고리즘 Selection Sort
+			for(int i=0;i<row-1;i++) {
+				for(int j=i+1;j<row-1;j++) {
+					if(arr[i][sortType].compareTo(arr[j][sortType]) > 0) { //스트링 비교
+						//앞에가 더 크면 교환해라.
+						for(int k=0;k<col;k++) {
+							temp = arr[i][k];
+							arr[i][k] = arr[j][k];
+							arr[j][k] = temp;
+						}
+					}
+				}
+			}
+			
+			// 2차원 배열의 데이터를 JTable객체로 옮기기
+			for(int i=0;i<row;i++) {
+				for(int j=0;j<col;j++) {
+					showTable.table.setValueAt(arr[i][j], i, j);
+				}
+			}
 		}
 
 		@Override
@@ -205,7 +280,7 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			
 		}
 		public void exit() {
-			
+			System.exit(0); //프로그램 정상종료
 		}
 		
 		
@@ -342,6 +417,7 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			public void search() {
 				Vector v = new Vector();
 				
+				// 순차(sequential) 정렬 알고리즘
 				for(int i=0;i<showTable.data.size();i++) {
 					if(nameText.getText().equals(showTable.data.elementAt(i).get(searchType))) {
 						v.addElement(showTable.data.elementAt(i));
@@ -408,8 +484,51 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			else if(e.getActionCommand().equals("검색")) searchData();
 			else if(e.getActionCommand().equals("수정")) updateData();
 			else if(e.getActionCommand().equals("삭제")) deleteData();
+			else if(e.getActionCommand().equals("이전")) prevData();
+			else if(e.getActionCommand().equals("다음")) nextData();
 			
 		} 
+		
+		public void prevData() {
+			
+			if(showTable.row > 0) {	//이전 데이터가 있다는 말
+				showTable.row--;	//한개 빼줘
+				addBtn.setEnabled(false); //추가 버튼 비활성화
+				nextBtn.setEnabled(true); //다음 버튼 활성화
+			}else { //이전 데이터 없음
+				return;
+			}
+			
+			showTable.Info();
+			
+		}
+		public void nextData() {
+			if(showTable.row < showTable.datamodel.getRowCount()-1) {	//다음 데이터가 있다는 말
+				showTable.row++;	//한개 빼줘
+				addBtn.setEnabled(false); //추가 버튼 비활성화
+				preBtn.setEnabled(true); //다음 버튼 활성화
+			}else { //이전 데이터 없음
+				nextBtn.setEnabled(false); //다음 버튼 비활
+				addBtn.setEnabled(true); //추가 버튼 활성화
+				
+				west.input.tf[0].setText(null);
+				west.input.tf[1].setText(null);
+				west.input.tf[2].setText(null);
+				west.input.tf[3].setText(null);
+				west.input.tf[4].setEnabled(true);
+				west.input.box.setSelectedIndex(0);
+				west.input.tf[0].requestFocus();
+				
+				west.output.label[0].setText("	나  이: ");
+				west.output.label[1].setText("	성  별: ");
+				west.output.label[2].setText("	츌생지: ");
+				west.output.label[3].setText("	생  일: ");
+				return;
+			}
+			
+			showTable.Info();
+			
+		}
 		
 		public void deleteData() {
 			int yes_no_select = JOptionPane.showConfirmDialog(null, "정말 삭제하시겠습니까?","삭제 확인 창", JOptionPane.YES_NO_OPTION);	//예,아니요 버튼 만듦
@@ -654,6 +773,7 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			
 		}
 		
+		// West에 뿌려주는 메소드
 		public void Info() {
 			int row = this.row; //showTable.row
 			west.input.tf[0].setText((String)showTable.table.getValueAt(row, 0));

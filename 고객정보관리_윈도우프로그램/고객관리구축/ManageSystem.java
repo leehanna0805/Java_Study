@@ -2,9 +2,13 @@ package 고객관리구축;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.swing.*;
@@ -138,6 +142,34 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 		} 
 		
 		public void open() {
+			StringTokenizer st;
+			Vector v;
+			
+			readOpen = new FileDialog(ManageSystem.this, "문서열기", FileDialog.LOAD);
+			readOpen.setVisible(true); //문서열기 창 띄우기
+			
+			fileDir = readOpen.getDirectory();// 디렉토리 얻어오기
+			fileName = readOpen.getFile();
+			
+			readfileName = fileDir + "//" + fileName;
+			
+			try {
+				// 보조스트림 참조변수 = new 보조스트림생성자(new 기본스트림생성자(디렉토리+파일명));
+				BufferedReader read = new BufferedReader(new FileReader(readfileName)); 
+				String line = null;
+				
+				while((line = read.readLine())!=null) {
+					st = new StringTokenizer(line,", "); //구분자가 콤마+공백. 중요행!
+					v = new Vector();
+					while(st.hasMoreTokens()) {
+						v.add(st.nextToken());
+					}
+					showTable.data.addElement(v);
+				}
+				showTable.datamodel.fireTableDataChanged();	//j table에 변화가 생겼다고 통보
+				read.close(); //자원해제
+				
+			}catch(Exception e) {System.out.println(e);}
 			
 		}
 		public void save() { //가장 핵심 기능
@@ -157,8 +189,19 @@ public class ManageSystem extends JFrame{	// JFrame 클래스는 윈도우 프로그래밍에
 			
 			//파일처리시 반.드.시 예외처리 할 것
 			try {
+				// 보조스트림 참조변수 = new 보조스트림생성자(new 기본스트림생성자(디렉토리+파일명));
 				BufferedWriter save = new BufferedWriter(new FileWriter(savefileName)); 
-			}catch(Exception e) {}
+				
+				for(int i=0;i<showTable.table.getRowCount();i++){
+					temp = showTable.data.elementAt(i).toString();
+					str+= temp.substring(1, temp.length()-1)+"\n";
+				}
+				save.write(str);	//파일에 저장 완료
+				save.close(); //저장 끝나고 자원 해제
+				
+			}catch(Exception e) {System.out.println(e);}
+			
+			
 			
 		}
 		public void exit() {
